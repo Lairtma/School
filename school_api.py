@@ -4,69 +4,19 @@ import sqlite3
 path_to_db = "School.db"
 
 def DefaultScheduleAddLesson(weekday: int, number_of_lesson: int, teacher_id: int, classroom_id: int, class_id:int, subject_id:int) -> int:
-    if not weekday:
-        return -1
-    if not number_of_lesson:
-        return -1
-    if not teacher_id:
-        return -1
-    if not classroom_id:
-        return -1
-    if not class_id:
-        return -1
-    if not subject_id:
-        return -1
-    connection = sqlite3.connect(path_to_db)
-    cursor = connection.cursor()
-    cursor.execute("INSERT INTO default_schedule (weekday, number_of_lesson, teacher_id, room_id, class_id, discipline_id, date_create) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (weekday, number_of_lesson, teacher_id, classroom_id, subject_id, datetime.now()))
-    connection.commit()
-    connection.close()
     return 0 # id созданного урока
 
 
 def DefaultScheduleGetLessonById(id: int) -> list:
-    connection = sqlite3.connect(path_to_db)
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM default_schedule WHERE id = ?", (id,))
-    lessons = cursor.fetchall()
-    connection.close()
-    return lessons
+    return []
 
 def DefaultScheduleGetLessons() -> list:
-    connection = sqlite3.connect(path_to_db)
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM default_schedule", (id,))
-    lessons = cursor.fetchall()
-    connection.close()
-    return lessons
+    return []
 
 def DefaultScheduleChangeLessonById(id: int, weekday: int, number_of_lesson: int, teacher_id: int, classroom_id: int, class_id:int, subject_id:int) -> bool:
-    lesson = DefaultScheduleGetLessonById(id)[0]
-    if not weekday:
-        weekday = lesson[1]
-    if not number_of_lesson:
-        number_of_lesson = lesson[2]
-    if not teacher_id:
-        teacher_id = lesson[3]
-    if not classroom_id:
-        classroom_id = lesson[4]
-    if not class_id:
-        class_id = lesson[5]
-    if not subject_id:
-        subject_id = lesson[6]
-    connection = sqlite3.connect(path_to_db)
-    cursor = connection.cursor()
-    cursor.execute("UPDATE default_schedule SET weekday = ?, number_of_lesson = ?, teacher_id = ?, room_id = ?, class_id = ?, discipline_id = ?, date_create = ? WHERE id = ?", (weekday, number_of_lesson, teacher_id, classroom_id, class_id, subject_id, datetime.now(), id))
-    connection.commit()
-    connection.close()
     return True # удалось поменять или нет
 
 def DefaultScheduleDeleteLessonById(id: int) -> bool:
-    connection = sqlite3.connect(path_to_db)
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM default_schedule WHERE id = ?", (id,))
-    connection.commit()
-    connection.close()
     return True # удалось удалить или нет
 
 def TeacherAdd(name: str, surname: str, lastname: str) -> int:
