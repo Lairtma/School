@@ -19,14 +19,85 @@ def DefaultScheduleChangeLessonById(id: int, weekday: int, number_of_lesson: int
 def DefaultScheduleDeleteLessonById(id: int) -> bool:
     return True # удалось удалить или нет
 
+table_name = "teachers"
 def TeacherAdd(name: str, surname: str, lastname: str) -> int:
-    return 0 # id добавленного учителя
+    """Добавление нового учителя"""
+    if not name:
+        return -1
+    if not surname:
+        return -1
+    if not lastname:
+        return -1
+    
+    connection = sqlite3.connect(path_to_db)
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(f'INSERT INTO {table_name} (name, surname, lastname)  VALUES (?, ?, ?)', (name, surname, lastname))
+        id = cursor.lastrowid
+        connection.commit()
+        connection.close()
+        return id # id добавленного учителя
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return -1
 
 def TeacherChangeById(id: int, name: str, surname: str, lastname: str) -> bool:
-    return True # удалось поменять или нет
+    """Изменение информации об учителе"""
+    #UPDATE teachers SET name = ?, surname = ?, lastname = ? WHERE id = ?
+    updatefields = {}
+    if name:
+        updatefields['name'] = name
+    if surname:
+        updatefields['surname'] = surname
+    if lastname:
+        updatefields['lastname'] = lastname
+    
+    connection = sqlite3.connect(path_to_db)
+    cursor = connection.cursor()
+
+    try:
+        a = ", ".join([f'{field} = ?' for field in updatefields.keys()])
+        b = list(updatefields.values())
+        b.append(id)
+        query = f"UPDATE {table_name} SET {a} WHERE id = ?"
+        cursor.execute(query, b)
+        connection.commit()
+        connection.close()
+        return True # удалось поменять или нет
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return False
+    
+
 
 def TeacherDeleteById(id: int) -> bool:
-    return True # удалось удалить или нет
+    """Удаление учителя"""
+    connection = sqlite3.connect(path_to_db)
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(f'DELETE FROM {table_name} WHERE id = ?' , id)
+        connection.commit()
+        connection.close()
+        return True # удалось удалить или нет
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return False
+
+def TeacherGetById(id: int) -> list:
+    """Получение информации об учителе"""
+    connection = sqlite3.connect(path_to_db)
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(f"SELECT * FROM {table_name} WHERE id = ?", (id,))
+        teacher = cursor.fetchall()
+        connection.close()
+        return teacher
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return None
 
 def SubjectAdd(name: str) -> int:
     return 0 # id добавленного предмета
