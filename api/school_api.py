@@ -160,13 +160,47 @@ def ClassRoomDeleteById(id: int) -> bool:
     return True # удалось удалить или нет
 
 def TeacherAndClassRoomAdd(classroom_id: int, teacher_id: int) -> int:
-    return 0 # id добавленной связи
+    connection = sqlite3.connect(path_to_db)
+    cursor = connection.cursor()
+    try:
+        cursor.execute("INSERT INTO teacher_and_room (classroom_id, teacher_id) VALUES (?, ?)", (classroom_id, teacher_id))
+        teacher_and_room_add = cursor.fetchall()
+        return teacher_and_room_add[0]
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return -1
+    finally:
+        connection.close()
+
 
 def TeacherAndClassRoomChangeById(id: int, classroom_id: int, teacher_id: int) -> bool:
-    return True # удалось поменять или нет
+    connection = sqlite3.connect(path_to_db)
+    cursor = connection.cursor()
+    try:
+        cursor.execute("UPDATE teacher_and_room SET classroom_id = ?, teacher_id = ? WHERE id = ?",
+               (classroom_id, teacher_id, id))
+        teacher_and_room_update = cursor.fetchall()
+        return True
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return False
+    finally:
+        connection.close()
+
 
 def TeacherAndClassRoomDeleteById(id: int) -> bool:
-    return True # удалось удалить или нет
+    connection = sqlite3.connect(path_to_db)
+    cursor = connection.cursor()
+    try:
+        cursor.execute("DELETE FROM teacher_and_room WHERE id = ?", (id,))
+        teacher_and_room_del = cursor.fetchall()
+        return True
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return False
+    finally:
+        connection.close()
+
 
 def ChangesInScheduleGetLessonById(id: int) -> list:
     connection = sqlite3.connect(path_to_db)
