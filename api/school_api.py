@@ -80,13 +80,75 @@ def TeacherDeleteById(id: int) -> bool:
     return True # удалось удалить или нет
 
 def SubjectAdd(name: str) -> int:
-    return 0 # id добавленного предмета
+    table_name = "discipline"
+    """Добавление нового предмета в таблицу."""
+    if not name:
+        return -1  # Возвращаем -1, если имя не указано
+    try:
+        connection = sqlite3.connect(path_to_db)
+        cursor = connection.cursor()
+        cursor.execute(f"INSERT INTO {table_name} (name) VALUES (?)", (name,))
+        id = cursor.lastrowid  # Получаем ID добавленной строки
+        connection.commit()
+        connection.close()
+        return id
+    except Exception as e:
+        print(f"Ошибка добавления предмета: {e}")
+        return -1
+
 
 def SubjectChangeById(id: int, name: str) -> bool:
-    return True # удалось поменять или нет
+    table_name = "discipline"
+    """Обновление названия предмета по ID."""
+    if not id or not name:
+        return False
+    try:
+        connection = sqlite3.connect(path_to_db)
+        cursor = connection.cursor()
+        query = f"UPDATE {table_name} SET name = ? WHERE id = ?"
+        cursor.execute(query, (name, id))
+        connection.commit()
+        connection.close()
+        return cursor.rowcount > 0  # Возвращаем True, если строки были обновлены
+    except Exception as e:
+        print(f"Ошибка обновления предмета: {e}")
+        return False
+
 
 def SubjectDeleteById(id: int) -> bool:
-    return True # удалось удалить или
+    """Удаление предмета по ID."""
+    table_name = "discipline"
+    if not id:
+        return False
+    try:
+        connection = sqlite3.connect(path_to_db)
+        cursor = connection.cursor()
+        query = f"DELETE FROM {table_name} WHERE id = ?"
+        cursor.execute(query, (id,))
+        connection.commit()
+        connection.close()
+        return cursor.rowcount > 0  # Возвращаем True, если строки были удалены
+    except Exception as e:
+        print(f"Ошибка удаления предмета: {e}")
+        return False
+
+def SubjectGetById(id: int) -> list:
+    table_name = "discipline"
+    """Получение информации о предмете по ID."""
+    if not id:
+        return None
+    try:
+        connection = sqlite3.connect(path_to_db)
+        cursor = connection.cursor()
+        query = f"SELECT * FROM {table_name} WHERE id = ?"
+        cursor.execute(query, (id,))
+        subject = cursor.fetchall()
+        connection.close()
+        return subject
+    except Exception as e:
+        print(f"Ошибка получения предмета: {e}")
+        return None
+
 
 def ClassRoomAdd(number: int, name: str) -> int:
     return 0 # id добавленного кабинета
