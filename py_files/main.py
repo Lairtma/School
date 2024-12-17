@@ -296,7 +296,6 @@ class MainWindow(QMainWindow):
         """)
         if "group_lesson" in self.existing_data_about_lesson:
             if self.existing_data_about_lesson["group_lesson"]:
-                print(self.existing_data_about_lesson)
                 self.radio_yes.setChecked(True)
                 self.radio_yes.setStyleSheet(self.radio_style_checked)
             else:
@@ -484,8 +483,22 @@ class MainWindow(QMainWindow):
 
         if self.radio_yes.isChecked(): 
             self.radio_yes.setStyleSheet(self.radio_style_checked)
-            self.new_updating_data["group_lesson"] = True
-            self.new_updating_data["num_subgroups"] = 2
+            if "num_subgroups" not in self.existing_data_about_lesson:
+                self.new_updating_data["group_lesson"] = True
+                self.new_updating_data["num_subgroups"] = 2
+                for i in range(1, self.new_updating_data["num_subgroups"] + 1):
+                    self.new_updating_data[i] = {
+                        "title_lesson": "",
+                        "teacher" : "",
+                        "places" : ""
+                    }
+
+                self.new_updating_data[1] = {
+                    "title_lesson" : self.list_for_lesson.currentText(),
+                    "teacher" : self.list_for_teacher.currentText(),
+                    "places" : self.list_for_rooms.currentText()
+                }
+
             if self.our_subgr_exist == 0:
                 self.add_layout_subgr()
 
@@ -539,7 +552,6 @@ class MainWindow(QMainWindow):
                 self.our_subgr_exist = 0
 
 
-
     # добавление подгруппы по нажатию на +
     def on_subgroup_item_selected(self, combo_box, index):
         selected_item = combo_box.itemText(index)  
@@ -548,32 +560,45 @@ class MainWindow(QMainWindow):
     
     def add_new_subgroup(self):
         self.new_updating_data["num_subgroups"] += 1
+        self.new_updating_data[self.new_updating_data["num_subgroups"]] = {               
+                        "title_lesson": "",
+                        "teacher" : "",
+                        "places" : ""
+        }
         new_item = str(self.new_updating_data["num_subgroups"])
         self.list_for_subgr.insertItem(self.list_for_subgr.count() - 1, new_item)
-
         self.list_for_subgr.setCurrentIndex(self.list_for_subgr.count() - 1)
 
     # список функция для обрабки того что выбрано в комбо боксах 
     def lists_on_lesson_selected(self):
-        self.new_updating_data["title_lesson"] = self.list_for_lesson.currentText()
-        self.list_for_subgr_selected()
+        if "num_subgroups" not in self.new_updating_data:
+            self.new_updating_data["title_lesson"] = self.list_for_lesson.currentText()
+            self.list_for_subgr_selected()
+        else: 
+            self.new_updating_data[int(self.list_for_subgr.currentText())]["title_lesson"] = self.list_for_lesson.currentText()
 
     def list_for_teacher_selected(self):
-        self.new_updating_data["teacher"] = self.list_for_teacher.currentText()
-        self.list_for_subgr_selected()
+        if "num_subgroups" not in self.new_updating_data:
+            self.new_updating_data["teacher"] = self.list_for_teacher.currentText()
+            self.list_for_subgr_selected()
+        else: 
+            self.new_updating_data[int(self.list_for_subgr.currentText())]["teacher"] = self.list_for_teacher.currentText()
 
     def list_for_rooms_selected(self):
-        self.new_updating_data["places"] = self.list_for_rooms.currentText()
-        self.list_for_subgr_selected()
+        if "num_subgroups" not in self.new_updating_data:
+            self.new_updating_data["places"] = self.list_for_rooms.currentText()
+            self.list_for_subgr_selected()
+        else:
+            self.new_updating_data[int(self.list_for_subgr.currentText())]["places"] = self.list_for_rooms.currentText()
 
     def list_for_subgr_selected(self):
         if "num_subgroups" in self.new_updating_data and self.our_subgr_exist == 1:
             if self.list_for_subgr.currentText() != "+":
-                self.new_updating_data[int(self.list_for_subgr.currentText())] = {
-                    "title_lesson" : self.list_for_lesson.currentText(),
-                    "teacher" : self.list_for_teacher.currentText(),
-                    "places" : self.list_for_rooms.currentText()
-                }
+                
+                self.list_for_lesson.setCurrentText(self.new_updating_data[int(self.list_for_subgr.currentText())]["title_lesson"])
+                self.list_for_teacher.setCurrentText(self.new_updating_data[int(self.list_for_subgr.currentText())]["teacher"])
+                self.list_for_rooms.setCurrentText(self.new_updating_data[int(self.list_for_subgr.currentText())]["places"])
+
 
     # логика функций
     def delete_button_clicked(self):
@@ -593,7 +618,8 @@ class MainWindow(QMainWindow):
         self.setting_of_lesson_dialog.close()
         if self.new_updating_data != self.existing_data_about_lesson:
             LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[1]][CLASSES_LIST[0]][1] = self.new_updating_data
-        print(self.new_updating_data)
+        print("new", self.new_updating_data)
+        print("must", LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[1]][CLASSES_LIST[0]][1])
         del self.new_updating_data
         del self.existing_data_about_lesson
         self.our_subgr_exist = 0
