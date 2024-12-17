@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTableWidget, QLineEdit, QLabel, QDialog, QComboBox, QRadioButton, QLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QTableWidgetItem, QTableWidget, QLineEdit, QLabel, QDialog, QComboBox, QRadioButton, QLayout, QPushButton
 from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtGui import QIcon, QPixmap, QTransform, QFont
 from PyQt5.QtCore import Qt
@@ -24,14 +24,14 @@ class MainWindow(QMainWindow):
         self.menu_bar_import_from_excel.triggered.connect(self.import_from_excel)
 
         #настройка кнопок "следующий день" и "предыдущий день" 
-        pixmap = QPixmap("../assets/arrow.png")
-        mirrored_pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+        self.pixmap = QPixmap("../assets/arrow.png")
+        mirrored_pixmap = self.pixmap.transformed(QTransform().scale(-1, 1))
 
         self.previous_day_button.setIcon(QIcon(mirrored_pixmap)) 
         self.previous_day_button.setIconSize(QtCore.QSize(32, 32)) 
         self.previous_day_button.setFixedSize(50, 50)  
 
-        self.next_day_button.setIcon(QIcon(pixmap)) 
+        self.next_day_button.setIcon(QIcon(self.pixmap)) 
         self.next_day_button.setIconSize(QtCore.QSize(32, 32)) 
         self.next_day_button.setFixedSize(50, 50)
 
@@ -140,7 +140,6 @@ class MainWindow(QMainWindow):
             self.table_schedule.setRowHeight(row, row_height)
 
 
-        # print(self.width(), self.height())
         
 
     #функкции для меню бара
@@ -180,14 +179,17 @@ class MainWindow(QMainWindow):
         for col in range(len(CLASSES_LIST)):
             class_lessons = CLASSES_LIST[0] # должен быть col а не 0
             for row in range(9):
-                is_group_lesson = data[class_lessons][1]["group_lesson"] # должен быть row а не 1
-                if is_group_lesson:
-                    item = QTableWidgetItem(f"Групповое")
+                if 1 in data[class_lessons]: # должен быть row а не 1
+                    is_group_lesson = data[class_lessons][1]["group_lesson"] # должен быть row а не 1
+                    if is_group_lesson:
+                        item = QTableWidgetItem(f"Групповое")
+                    else:
+                        subject = data[class_lessons][1]["title_lesson"] if data[class_lessons][1]["title_lesson"] is not None else ""
+                        teacher = data[class_lessons][1]["teacher"] if data[class_lessons][1]["teacher"] is not None else ""
+                        place = data[class_lessons][1]["places"] if data[class_lessons][1]["places"] is not None else ""
+                        item = QTableWidgetItem(f"{subject}\n{teacher}\n{place}")
                 else:
-                    subject = data[class_lessons][1]["title_lesson"] if data[class_lessons][1]["title_lesson"] is not None else ""
-                    teacher = data[class_lessons][1]["teacher"] if data[class_lessons][1]["teacher"] is not None else ""
-                    place = data[class_lessons][1]["places"] if data[class_lessons][1]["places"] is not None else ""
-                    item = QTableWidgetItem(f"{subject}\n{teacher}\n{place}")
+                    item = QTableWidgetItem()
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 item.setTextAlignment(Qt.AlignCenter)
                 self.table_schedule.setItem(row, col, item)
@@ -211,11 +213,15 @@ class MainWindow(QMainWindow):
     def settings_of_lesson(self, row, column):
 
         # наши первоначальные данные 
-        self.existing_data_about_lesson = LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[1]][CLASSES_LIST[0]][1]
+        try:
+            self.existing_data_about_lesson = LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[1]][CLASSES_LIST[0]][1]
         #existing_data_about_lesson = LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[self.current_day_of_week]][CLASSES_LIST[column]][row]
-
+        except Exception as e:
+            self.existing_data_about_lesson = {}
+        
         # наши новые данные 
-        self.new_updating_data = LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[1]][CLASSES_LIST[0]][1]
+        self.new_updating_data = self.existing_data_about_lesson
+        self.our_subgr_exist = 0
 
 
         self.setting_of_lesson_dialog = QDialog(self)
@@ -288,61 +294,77 @@ class MainWindow(QMainWindow):
                 border: none;
             }
         """)
+        if "group_lesson" in self.existing_data_about_lesson:
+            if self.existing_data_about_lesson["group_lesson"]:
+                print(self.existing_data_about_lesson)
+                self.radio_yes.setChecked(True)
+                self.radio_yes.setStyleSheet(self.radio_style_checked)
+            else:
+                self.radio_no.setChecked(True)
+                self.radio_no.setStyleSheet(self.radio_style_checked)
 
-        if self.existing_data_about_lesson["group_lesson"]:
-            self.radio_yes.setChecked(True)
-        else:
-            self.radio_no.setChecked(True)
-        self.update_button_color()
 
 
-        self.radio_yes.toggled.connect(self.update_button_color)
-        self.radio_no.toggled.connect(self.update_button_color)
+        self.radio_yes.toggled.connect(self.update_button_color_and_info)
+        self.radio_no.toggled.connect(self.update_button_color_and_info)
 
         layout_h = QHBoxLayout()
         layout_h.addWidget(label_is_group)
         layout_h.addWidget(self.radio_yes)
         layout_h.addWidget(self.radio_no)
         
-        # выпадающие списки. Для не групповых занятий
+        # выпадающие списки. 
 
-        layout_v_for_lists = QVBoxLayout()
+        self.layout_v_for_lists = QVBoxLayout()
+        
 
         # список предметов
 
         layout_for_lists_subj = QHBoxLayout()
         label_for_lesson = QLabel("Урок: ")
         label_for_lesson.setStyleSheet("font-size: 18px; color: #FFFFFF;")
-        list_for_lesson = QComboBox()
-        list_for_lesson.addItems(SUBJECTS_LIST)
-        list_for_lesson.setStyleSheet("""
+        self.list_for_lesson = QComboBox()
+        self.list_for_lesson.addItem(self.new_updating_data["title_lesson"])
+        self.list_for_lesson.addItems(SUBJECTS_LIST)
+        self.list_for_lesson.setFixedWidth(200)
+        self.list_for_lesson.setFixedHeight(40)
+        self.list_for_lesson.setStyleSheet("""
             QComboBox {
                 background-color: #DCDCDC;
                 font-size: 16px;
                 border-radius: 5px;
+                color: #000000;
             }
         """)
+        self.list_for_lesson.currentIndexChanged.connect(self.lists_on_lesson_selected)
 
         layout_for_lists_subj.addWidget(label_for_lesson)
-        layout_for_lists_subj.addWidget(list_for_lesson)
+        layout_for_lists_subj.addWidget(self.list_for_lesson)
 
         # список учителей
 
         layout_for_lists_teachers = QHBoxLayout()
         label_for_teacher = QLabel("Учитель: ")
         label_for_teacher.setStyleSheet("font-size: 18px; color: #FFFFFF;")
-        list_for_teacher = QComboBox()
-        list_for_teacher.addItems(TEACHERS)
-        list_for_teacher.setStyleSheet("""
+        self.list_for_teacher = QComboBox()
+        self.list_for_teacher.addItem(self.new_updating_data["teacher"])
+        self.list_for_teacher.addItems(TEACHERS)
+        self.list_for_teacher.setFixedWidth(200)
+        self.list_for_teacher.setFixedHeight(40)
+        self.list_for_teacher.setStyleSheet("""
             QComboBox {
                 background-color: #DCDCDC;
                 font-size: 16px;
+                border: none; /* Убираем обводку */
                 border-radius: 5px;
+                color: #000000;
             }
         """)
 
+        self.list_for_teacher.currentIndexChanged.connect(self.list_for_teacher_selected)
+
         layout_for_lists_teachers.addWidget(label_for_teacher)
-        layout_for_lists_teachers.addWidget(list_for_teacher)
+        layout_for_lists_teachers.addWidget(self.list_for_teacher)
 
 
         # список кабинетов 
@@ -350,49 +372,237 @@ class MainWindow(QMainWindow):
         layout_for_lists_rooms = QHBoxLayout()
         label_for_rooms = QLabel("Кабинет: ")
         label_for_rooms.setStyleSheet("font-size: 18px; color: #FFFFFF;")
-        list_for_rooms = QComboBox()
-        list_for_rooms.addItems(map(str, PLACES))
-        list_for_rooms.setStyleSheet("""
+        self.list_for_rooms = QComboBox()
+        self.list_for_rooms.addItem(str(self.new_updating_data["places"]))
+        self.list_for_rooms.addItems(map(str, PLACES))
+        self.list_for_rooms.setFixedWidth(200)
+        self.list_for_rooms.setFixedHeight(40)
+        self.list_for_rooms.setStyleSheet("""
             QComboBox {
                 background-color: #DCDCDC;
                 font-size: 16px;
                 border-radius: 5px;
+                color: #000000;
             }
         """)
 
+        self.list_for_rooms.currentIndexChanged.connect(self.list_for_rooms_selected)
+
         layout_for_lists_rooms.addWidget(label_for_rooms)
-        layout_for_lists_rooms.addWidget(list_for_rooms)
+        layout_for_lists_rooms.addWidget(self.list_for_rooms)
 
         # обьеденяем все лэйауты списков
 
-        layout_v_for_lists.addLayout(layout_for_lists_subj)
-        layout_v_for_lists.addLayout(layout_for_lists_teachers)
-        layout_v_for_lists.addLayout(layout_for_lists_rooms)
+
+        self.layout_v_for_lists.addLayout(layout_for_lists_subj)
+        self.layout_v_for_lists.addLayout(layout_for_lists_teachers)
+        self.layout_v_for_lists.addLayout(layout_for_lists_rooms)
+
+
+        # кнокпи для манипуляции с действиями 
+        button_font = QFont("Times New Roman", 18)
+        delete_button = QPushButton("Удалить урок")
+        delete_button.setFont(button_font)
+        delete_button.setFixedHeight(40)
+        delete_button.setStyleSheet("""
+            QPushButton {
+                background-color: #81A6A8;
+                color: #FFFFFF;
+                border-radius: 10px;
+            }
+            QPushButton:pressed {
+                background-color: #6A8B8E;
+            }
+        """)
+
+        delete_button.clicked.connect(self.delete_button_clicked)
+
+        save_button = QPushButton("Сохранить")
+        save_button.setFont(button_font)
+        save_button.setFixedHeight(50)
+        save_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4F6A6D;
+                color: #FFFFFF;
+                border-radius: 10px;
+            }
+            QPushButton:pressed {
+                background-color: #3F5457;
+            }
+        """)
+
+        save_button.clicked.connect(self.save_button_clicked)
+
+        save_schedule_button = QPushButton("Сохранить для расписания")
+        save_schedule_button.setFont(button_font)
+        save_schedule_button.setFixedHeight(50)
+        save_schedule_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4F6A6D;
+                color: #FFFFFF;
+                border-radius: 10px;
+            }
+            QPushButton:pressed {
+                background-color: #3F5457;
+            }
+        """)
+
+        save_schedule_button.clicked.connect(lambda: self.save_for_schedule_button_clicked(row, column))
+        
 
 
         layout = QVBoxLayout()
+        layout.setSpacing(20)
         layout.addWidget(label_class_name, alignment=Qt.AlignCenter)
         layout.addWidget(label_class_date, alignment=Qt.AlignCenter)
         layout.addWidget(label_class_num, alignment=Qt.AlignCenter)
         layout.addLayout(layout_h) # радиобоксы 
-        layout.addLayout(layout_v_for_lists) # списки
-        # layout.setSizeConstraint(QLayout.SetFixedSize)  
-        self.setting_of_lesson_dialog.setLayout(layout)
+        layout.addLayout(self.layout_v_for_lists) # списки
+        layout.addWidget(delete_button)
+        layout.addWidget(save_button)
+        layout.addWidget(save_schedule_button)
+        layout.setSizeConstraint(QLayout.SetFixedSize)  
+        container_widget = QWidget()
+        container_widget.setFixedSize(350, 400)
+        container_widget.setLayout(layout)
+        
+        self.update_button_color_and_info()
+
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(container_widget, alignment=Qt.AlignTop |  Qt.AlignCenter)
+
+        self.setting_of_lesson_dialog.setLayout(main_layout)
 
 
         self.setting_of_lesson_dialog.exec_()
+    
 
-    def update_button_color(self):
+    def update_button_color_and_info(self):
         self.radio_yes.setStyleSheet(self.radio_style_not_checked)
         self.radio_no.setStyleSheet(self.radio_style_not_checked)
 
         if self.radio_yes.isChecked(): 
             self.radio_yes.setStyleSheet(self.radio_style_checked)
             self.new_updating_data["group_lesson"] = True
-        if self.radio_no.isChecked(): 
+            self.new_updating_data["num_subgroups"] = 2
+            if self.our_subgr_exist == 0:
+                self.add_layout_subgr()
+
+        elif self.radio_no.isChecked(): 
             self.radio_no.setStyleSheet(self.radio_style_checked)
             self.new_updating_data["group_lesson"] = False
+            if "num_subgroups" in self.new_updating_data: del self.new_updating_data["num_subgroups"]
+            self.add_layout_subgr()
 
+    def add_layout_subgr(self):
+        if self.new_updating_data["group_lesson"]:
+            self.our_subgr_exist = 1
+            self.layout_for_lists_subgr = QHBoxLayout()
+            label_for_subgr = QLabel("Подгруппа: ")
+            label_for_subgr.setStyleSheet("font-size: 18px; color: #FFFFFF;")
+            self.list_for_subgr = QComboBox()
+            self.list_for_subgr.addItems([str(x + 1) for x in range(self.new_updating_data["num_subgroups"])])
+            self.list_for_subgr.addItem("+")
+            self.list_for_subgr.activated.connect(lambda index: self.on_subgroup_item_selected(self.list_for_subgr, index))
+            self.list_for_subgr.setFixedWidth(200)
+            self.list_for_subgr.setFixedHeight(40)
+            self.list_for_subgr.setStyleSheet("""
+                QComboBox {
+                    background-color: #DCDCDC;
+                    font-size: 16px;
+                    border-radius: 5px;
+                    color: #000000;
+                }
+            """)
+
+            self.list_for_subgr.currentIndexChanged.connect(self.list_for_subgr_selected)
+
+            self.layout_for_lists_subgr.addWidget(label_for_subgr)
+            self.layout_for_lists_subgr.addWidget(self.list_for_subgr)
+            self.layout_v_for_lists.insertLayout(0, self.layout_for_lists_subgr)
+            self.list_for_subgr_selected()
+
+        else:
+            if hasattr(self, "layout_for_lists_subgr") and self.layout_for_lists_subgr is not None and self.our_subgr_exist == 1:
+                while self.layout_for_lists_subgr.count():
+                    item = self.layout_for_lists_subgr.takeAt(0)
+                    widget = item.widget()
+                    if widget:
+                        widget.deleteLater() 
+                    
+                self.layout_v_for_lists.removeItem(self.layout_for_lists_subgr)
+                
+                self.layout_for_lists_subgr.deleteLater()
+                self.layout_for_lists_subgr = None
+            
+                self.our_subgr_exist = 0
+
+
+
+    # добавление подгруппы по нажатию на +
+    def on_subgroup_item_selected(self, combo_box, index):
+        selected_item = combo_box.itemText(index)  
+        if selected_item == "+":  
+            self.add_new_subgroup()  
+    
+    def add_new_subgroup(self):
+        self.new_updating_data["num_subgroups"] += 1
+        new_item = str(self.new_updating_data["num_subgroups"])
+        self.list_for_subgr.insertItem(self.list_for_subgr.count() - 1, new_item)
+
+        self.list_for_subgr.setCurrentIndex(self.list_for_subgr.count() - 1)
+
+    # список функция для обрабки того что выбрано в комбо боксах 
+    def lists_on_lesson_selected(self):
+        self.new_updating_data["title_lesson"] = self.list_for_lesson.currentText()
+        self.list_for_subgr_selected()
+
+    def list_for_teacher_selected(self):
+        self.new_updating_data["teacher"] = self.list_for_teacher.currentText()
+        self.list_for_subgr_selected()
+
+    def list_for_rooms_selected(self):
+        self.new_updating_data["places"] = self.list_for_rooms.currentText()
+        self.list_for_subgr_selected()
+
+    def list_for_subgr_selected(self):
+        if "num_subgroups" in self.new_updating_data and self.our_subgr_exist == 1:
+            if self.list_for_subgr.currentText() != "+":
+                self.new_updating_data[int(self.list_for_subgr.currentText())] = {
+                    "title_lesson" : self.list_for_lesson.currentText(),
+                    "teacher" : self.list_for_teacher.currentText(),
+                    "places" : self.list_for_rooms.currentText()
+                }
+
+    # логика функций
+    def delete_button_clicked(self):
+        self.setting_of_lesson_dialog.close()
+        del self.existing_data_about_lesson
+        del self.new_updating_data
+        LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[1]][CLASSES_LIST[0]][1] = {
+                "group_lesson" : False,
+                "title_lesson" : "",
+                "teacher" : "",
+                "places" : ""
+        }
+        self.our_subgr_exist = 0
+        self.set_lessons_main_table()
+
+    def save_button_clicked(self):
+        self.setting_of_lesson_dialog.close()
+        if self.new_updating_data != self.existing_data_about_lesson:
+            LESSONS_TITLE_PLACE_TEACHER_CLASS[WEEK_DAYS[1]][CLASSES_LIST[0]][1] = self.new_updating_data
+        print(self.new_updating_data)
+        del self.new_updating_data
+        del self.existing_data_about_lesson
+        self.our_subgr_exist = 0
+        self.set_lessons_main_table()  
+
+    def save_for_schedule_button_clicked(self, row, column):
+        # for day in WEEK_DAYS:
+        #     LESSONS_TITLE_PLACE_TEACHER_CLASS[day][CLASSES_LIST[column]][row + 1] = self.new_updating_data
+        print(column, row)
 
     # функция для нажатия на кнопку номера урока 
     def on_cell_clicked(self, row, column):

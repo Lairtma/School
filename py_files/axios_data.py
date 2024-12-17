@@ -67,18 +67,18 @@ LESSONS_TITLE_PLACE_TEACHER_CLASS = {
                 "group_lesson" : False,
                 "title_lesson" : SUBJECTS_LIST[0],
                 "teacher" : TEACHERS[0],
-                "places" : None
+                "places" : ""
                 },
             2: 
                 {
                     "group_lesson" : True,
                     "num_subgroups" : 2,
-                    "group_1": {
+                    1: {
                         "title_lesson" : SUBJECTS_LIST[1],
                         "teacher" : TEACHERS[1],
                         "places" : PLACES[0]
                     },
-                    "group_2": {
+                    2: {
                         "title_lesson" : SUBJECTS_LIST[2],
                         "teacher" : TEACHERS[2],
                         "places" : PLACES[1]
