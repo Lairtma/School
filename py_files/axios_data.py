@@ -58,7 +58,7 @@ PLACES = [ x for x in range (100, 120) ]
 
 
 LESSONS_TITLE_PLACE_TEACHER_CLASS = {
-    WEEK_DAYS[0]: # день недели
+    WEEK_DAYS[1]: # день недели
     {
         CLASSES_LIST[0]: # класс
         { 
