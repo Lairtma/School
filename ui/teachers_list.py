@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QLabel, QListWidget, QListWidgetItem
+    QLabel, QListWidget, QListWidgetItem, QLineEdit, QDialog, QFormLayout
 )
 from PyQt5.QtCore import Qt
 
@@ -120,9 +120,46 @@ class TeacherListWindow(QMainWindow):
 
     def delete_teacher(self, teacher_name):
         print(f"Удалён учитель: {teacher_name}")
+        # Удалить учителя из списка данных (сделать реальную логику удаления)
 
     def edit_teacher(self, teacher_name):
         print(f"Редактирование учителя: {teacher_name}")
+        self.open_edit_dialog(teacher_name)
+
+    def open_edit_dialog(self, teacher_name):
+        # Диалоговое окно для редактирования
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Изменить учителя")
+        dialog.setFixedSize(400, 300)
+        layout = QFormLayout()
+
+        # Поле для редактирования имени учителя
+        self.name_edit = QLineEdit(teacher_name)
+        self.name_edit.setFixedSize(250, 30)
+        layout.addRow("Имя учителя:", self.name_edit)
+
+        # Кнопки для сохранения или отмены
+        save_button = QPushButton("Сохранить")
+        cancel_button = QPushButton("Отмена")
+
+        save_button.clicked.connect(self.save_edited_teacher)
+        cancel_button.clicked.connect(dialog.reject)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(cancel_button)
+
+        layout.addRow(button_layout)
+
+        dialog.setLayout(layout)
+        dialog.exec_()
+
+    def save_edited_teacher(self):
+        new_teacher_name = self.name_edit.text()
+        print(f"Учитель изменён на: {new_teacher_name}")
+        # Логика сохранения изменений в основной список
+        # Вы можете обновить список учителей или сохранить изменения в файл
+        self.close()
 
     def go_back(self):
         print("Назад")
@@ -130,7 +167,7 @@ class TeacherListWindow(QMainWindow):
 
     def add_teacher(self):
         print("Добавление нового учителя")
-
+        # Реализуйте функционал для добавления нового учителя
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
