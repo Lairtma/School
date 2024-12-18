@@ -1,17 +1,17 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QTableWidgetItem, \
     QTableWidget, QLineEdit, QLabel, QDialog, QComboBox, QRadioButton, QLayout, QPushButton
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, uic
 from PyQt5.QtGui import QIcon, QPixmap, QTransform, QFont
 from PyQt5.QtCore import Qt
-from axios_data import *
+from axios_data_main import *
 from datetime import datetime, timedelta
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-        uic.loadUi("mainWindow.ui", self)
+        uic.loadUi("../assets/mainWindow.ui", self)
 
         self.setWindowTitle("School Schedule for Konstantin")
         central_widget = QWidget(self)
